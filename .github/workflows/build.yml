@@ -8,29 +8,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up JDK
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-      with:
-        api-level: 33
-        build-tools: 33.0.2
+      - name: Install Android SDK manually
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip wget
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d $HOME/android-sdk
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          mv $HOME/android-sdk/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
-    - name: Grant execute permission
-      run: chmod +x ./gradlew
+      - name: Grant execute permission
+        run: chmod +x ./gradlew
 
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: walkietalkie-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: walkietalkie-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
